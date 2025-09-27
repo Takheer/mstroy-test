@@ -39,7 +39,7 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
 
   private placeElementIntoLookup(item: D) {
     const itemId = item.id
-    const parent = item.parent
+    const parentId = item.parent
 
     if (!Object.prototype.hasOwnProperty.call(this.lookup, itemId)) {
       this.lookup[itemId] = { children: [] }
@@ -50,16 +50,16 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
 
     const treeItem = this.lookup[itemId]
 
-    if (parent === null || parent === undefined) {
+    if (parentId === null || parentId === undefined) {
       this.rootItems.push(treeItem)
     } else {
-      if (!Object.prototype.hasOwnProperty.call(this.lookup, parent)) {
-        this.lookup[parent] = { children: [] }
-        this.itemIdToDirectChildren[parent] = []
+      if (!Object.prototype.hasOwnProperty.call(this.lookup, parentId)) {
+        this.lookup[parentId] = { children: [] }
+        this.itemIdToDirectChildren[parentId] = []
       }
 
-      this.lookup[parent].children.push(treeItem)
-      this.itemIdToDirectChildren[parent].push(item)
+      this.lookup[parentId].children.push(treeItem)
+      this.itemIdToDirectChildren[parentId].push(item)
     }
   }
 
@@ -147,6 +147,10 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
     }
   }
 
+  // O(n^2), потому что BFS должен быть запущен для каждой ноды.
+  // Раз мы храним ссылки на потомков и на родителей, пересчитывать придётся практически всё.
+  // Можем себе позволить, если делать это не на каждое чтение, а при инициализации
+  // и при изменении дерева
   updateItem(item: D) {
     if (!(item.id in this.lookup)) {
       throw new Error('Нельзя обновить элемент, которого нет в дереве!')
@@ -157,7 +161,6 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
     const indexToReplace = this.items.findIndex(i => i.id === item.id)
     this.items.splice(indexToReplace, 1, item)
 
-    // TODO пересчитывать не всё дерево, а только то, что действительно изменилось
     this.lookup = {}
     for (const item of this.items) {
       this.placeElementIntoLookup(item)
@@ -169,9 +172,6 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
     }
   }
 
-  // O(n^2), потому что BFS должен быть запущен для каждой ноды.
-  // Можем себе позволить, если делать не на каждое чтение, а при инициализации
-  // и при изменении дерева
   private getAllNodesBFS(root: TreeItem<D>): D[] {
     const allNodes: D[] = []
     if (!root) {

@@ -62,6 +62,7 @@ describe('TreeStore', () => {
     expect(treeStore.getAll().length).toEqual(8)
     expect(treeStore.getChildren('91064cce').length).toEqual(3)
     expect(treeStore.getAllChildren('91064cce').length).toEqual(5)
+    expect(treeStore.getAllParents('91064cce').length).toEqual(2)
     expect(treeStore.getChildren(3).length).toEqual(0)
     expect(treeStore.getAllChildren(3).length).toEqual(0)
 
@@ -72,6 +73,16 @@ describe('TreeStore', () => {
     expect(treeStore.getAllChildren('91064cce').length).toEqual(2)
     expect(treeStore.getChildren(3).length).toEqual(1)
     expect(treeStore.getAllChildren(3).length).toEqual(3)
+
+    treeStore.updateItem({ id: '91064cce', parent: null,  label: 'Child 2 -> Parent 3' })
+
+    expect(treeStore.getAll().length).toEqual(8);
+    expect(treeStore.getChildren('91064cce').length).toEqual(2)
+    expect(treeStore.getAllChildren('91064cce').length).toEqual(2)
+    expect(treeStore.getAllParents('91064cce').length).toEqual(1)
+    expect(treeStore.getChildren(3).length).toEqual(1)
+    expect(treeStore.getAllChildren(3).length).toEqual(3)
+    expect(treeStore.getAllParents(3).length).toEqual(2)
   })
 
   it('Не меняет неправильно переданную ноду', () => {
