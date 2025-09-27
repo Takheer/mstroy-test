@@ -24,7 +24,16 @@ describe('TreeStore', () => {
     expect(treeStore.getItem('91064cce')).toEqual({ id: '91064cce', parent: 1,  label: 'Child 2' });
     expect(treeStore.getChildren('91064cce').length).toEqual(3)
     expect(treeStore.getAllChildren('91064cce').length).toEqual(5)
-    expect(treeStore.getAllParents(4).length).toEqual(2)
+    expect(treeStore.getAllParents(4).length).toEqual(3)
+  })
+
+  it('Включает айтем в список ответа getAllParents', () => {
+    const copiedTree = JSON.parse(JSON.stringify(exampleTree))
+    const treeStore = new TreeStore<TFlatTreeItem>(copiedTree)
+
+    expect(treeStore.getAllParents(1).length).toEqual(1)
+    expect(treeStore.getAllParents('91064cce').length).toEqual(2)
+    expect(treeStore.getAllParents(4).length).toEqual(3)
   })
 
   it('Добавляет валидную ноду', () => {
@@ -33,6 +42,8 @@ describe('TreeStore', () => {
     expect(treeStore.getAll().length).toEqual(8)
     treeStore.addItem({ id: 123, parent: null, label: 'Adjacent root' })
     expect(treeStore.getAll().length).toEqual(9)
+    treeStore.addItem({ id: 124, parent: 123, label: 'child 124' })
+    expect(treeStore.getAll().length).toEqual(10)
   })
 
   it('Не добавляет невалидную ноду', () => {

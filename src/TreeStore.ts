@@ -129,7 +129,7 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
     this.itemIdToAllParents[item.id] = [
       this.getItem(item.id),
       this.getItem(item.parent),
-      ...this.itemIdToAllParents[item.parent],
+      ...(this.itemIdToAllParents[item.parent] ?? []),
     ].filter((c) => !!c)
   }
 
