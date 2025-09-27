@@ -127,6 +127,7 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
     this.itemIdToAllChildren[item.parent].push(item)
     this.itemIdToDirectChildren[item.parent].push(item)
     this.itemIdToAllParents[item.id] = [
+      this.getItem(item.id),
       this.getItem(item.parent),
       ...this.itemIdToAllParents[item.parent],
     ].filter((c) => !!c)
@@ -195,9 +196,9 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
   }
 
   private setAllParents(key: TId): D[] {
-    const parents = []
     let item
     item = this.getItem(key)
+    const parents = [item]
     do {
       if (!item?.parent) {
         return parents.filter((p) => !!p)

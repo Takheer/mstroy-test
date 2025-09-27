@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import  { TreeStore } from '@/TreeStore'
-
-type TFlatTreeItem = {
-  id: string | number
-  parent: string | number | null
-  label: string
-}
+import type { TFlatTreeItem } from '@/types.ts'
 
 const exampleTree: TFlatTreeItem[] = [
   { id: 1, parent: null, label: 'Child 1' },
