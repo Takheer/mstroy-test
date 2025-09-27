@@ -23,7 +23,7 @@ export interface ITreeStore<D extends Ids = Ids> {
 
 export class TreeStore<D extends Ids> implements ITreeStore<D> {
   // входящие элементы
-  private items: D[]
+  private readonly items: D[]
 
   // Итоговое дерево
   private rootItems: TreeItem<D>[] = []
@@ -172,23 +172,24 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
     }
   }
 
+  // Будем искать по дереву в ширину через очередь, чтобы избежать рекурсии
   private getAllNodesBFS(root: TreeItem<D>): D[] {
     const allNodes: D[] = []
     if (!root) {
       return allNodes
     }
 
-    const queue = [...root.children] // Initialize a queue with the root node children
+    const queue = [...root.children]
 
     while (queue.length > 0) {
-      const currentNode = queue.shift() // Dequeue the first node
+      const currentNode = queue.shift()
       if (currentNode?.data) {
-        allNodes.push(currentNode.data) // Add it to the list
+        allNodes.push(currentNode.data)
       }
 
       if (currentNode?.children) {
         for (const child of currentNode.children) {
-          queue.push(child) // Enqueue all children
+          queue.push(child)
         }
       }
     }
