@@ -66,18 +66,7 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
   constructor(items: D[]) {
     this.items = items
 
-    for (const item of items) {
-      this.placeElementIntoLookup(item)
-    }
-
-    if (this.countNodes(this.rootItems) < Object.keys(this.lookup).length) {
-      throw new Error(`The items array contains nodes with a circular parent/child relationship.`)
-    }
-
-    for (const [key, item] of Object.entries(this.lookup)) {
-      this.itemIdToAllChildren[key] = this.getAllNodesBFS(item)
-      this.itemIdToAllParents[key] = this.setAllParents(key)
-    }
+    this.recalculate()
   }
 
   private countNodes(tree: TreeItem<D>[]): number {
@@ -147,7 +136,23 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
     }
   }
 
-  // O(n^2), потому что BFS должен быть запущен для каждой ноды.
+  recalculate() {
+    this.lookup = {}
+    for (const item of this.items) {
+      this.placeElementIntoLookup(item)
+    }
+
+    if (this.countNodes(this.rootItems) < Object.keys(this.lookup).length) {
+      throw new Error(`The items array contains nodes with a circular parent/child relationship.`)
+    }
+
+    for (const [key, item] of Object.entries(this.lookup)) {
+      this.itemIdToAllParents[key] = this.setAllParents(key)
+      this.itemIdToAllChildren[key] = this.getAllNodesDFS(item)
+    }
+  }
+
+  // Изначальный вариант работал за O(n^2), теперь работает за O(n)
   // Раз мы храним ссылки на потомков и на родителей, пересчитывать придётся практически всё.
   // Можем себе позволить, если делать это не на каждое чтение, а при инициализации
   // и при изменении дерева
@@ -161,19 +166,11 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
     const indexToReplace = this.items.findIndex(i => i.id === item.id)
     this.items.splice(indexToReplace, 1, item)
 
-    this.lookup = {}
-    for (const item of this.items) {
-      this.placeElementIntoLookup(item)
-    }
-
-    for (const [key, item] of Object.entries(this.lookup)) {
-      this.itemIdToAllChildren[key] = this.getAllNodesBFS(item)
-      this.itemIdToAllParents[key] = this.setAllParents(key)
-    }
+    this.recalculate()
   }
 
-  // Будем искать по дереву в ширину через очередь, чтобы избежать рекурсии
-  private getAllNodesBFS(root: TreeItem<D>): D[] {
+  // Будем искать по дереву в глубину через очередь, чтобы избежать рекурсии
+  private getAllNodesDFS(root: TreeItem<D>): D[] {
     const allNodes: D[] = []
     if (!root) {
       return allNodes
@@ -187,10 +184,12 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
         allNodes.push(currentNode.data)
       }
 
-      if (currentNode?.children) {
-        for (const child of currentNode.children) {
-          queue.push(child)
-        }
+      if (!currentNode?.children) {
+        continue;
+      }
+
+      for (const child of currentNode.children) {
+        queue.unshift(child)
       }
     }
     return allNodes
@@ -199,12 +198,16 @@ export class TreeStore<D extends Ids> implements ITreeStore<D> {
   private setAllParents(key: TId): D[] {
     let item
     item = this.getItem(key)
-    const parents = [item]
+    if (!item) return [];
+    const parents: D[] = [item]
     do {
       if (!item?.parent) {
         return parents.filter((p) => !!p)
       }
-      parents.push(this.getItem(item.parent))
+      if (this.itemIdToAllParents[item.parent]) {
+        return [...parents, ...this.itemIdToAllParents[item.parent]]
+      }
+      parents.push(this.getItem(item.parent)!)
       item = this.getItem(item.parent)
     } while (item?.parent !== null)
 

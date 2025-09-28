@@ -132,4 +132,16 @@ describe('TreeStore', () => {
 
     expect(treeStore.getAll().length).toEqual(8)
   })
+
+  it('Не ломается на большом количестве айтемов', () => {
+    // на 10e6 не хватает памяти
+    const BIG_NUMBER = 10e5;
+    const newData = [{ id: 1, parent: null, label: 'Root'}] as TFlatTreeItem[];
+    for (let i = 1; i <= BIG_NUMBER; i++) {
+      newData[i] = { id: i+1, parent: Math.floor(i/2) + i%2, label: `Item ${i+1}`}
+    }
+    const treeStore = new TreeStore<TFlatTreeItem>(newData)
+
+    expect(treeStore.getAll().length).toEqual(BIG_NUMBER+1)
+  })
 })
